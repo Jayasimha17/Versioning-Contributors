@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            border: 1px solid #000;
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="240" height="320"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const scale = 8;
+        const rows = canvas.height / scale;
+        const columns = canvas.width / scale;
+
+        let snake;
+        let fruit;
+        let snakeImg;
+
+        (function setup() {
+            snakeImg = new Image();
+            snakeImg.src = "snake.png";
+
+            snake = new Snake();
+            fruit = new Fruit();
+            fruit.pickLocation();
+
+            window.setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                fruit.draw();
+                snake.update();
+                snake.draw();
+
+                if (snake.eat(fruit)) {
+                    fruit.pickLocation();
+                }
+
+                if (snake.checkCollision()) {
+                    gameOver();
+                }
+            }, 100);
+        }());
+
+        window.addEventListener("keydown", (evt) => {
+            const direction = evt.key.replace("Arrow", "");
+            snake.changeDirection(direction);
+        });
+
+        function Snake() {
+            this.x = 0;
+            this.y = 0;
+            this.xSpeed = scale * 1;
+            this.ySpeed = 0;
+            this.total = 0;
+            this.tail = [];
+
+            this.draw = function () {
+                for (let i = 0; i < this.tail.length; i++) {
+                    ctx.drawImage(snakeImg, this.tail[i].x, this.tail[i].y, scale, scale);
+                }
+                ctx.drawImage(snakeImg, this.x, this.y, scale, scale);
+            };
+
+            this.update = function () {
+                for (let i = 0; i < this.tail.length - 1; i++) {
+                    this.tail[i] = this.tail[i + 1];
+                }
+                this.tail[this.total - 1] = { x: this.x, y: this.y };
+
+                this.x += this.xSpeed;
+                this.y += this.ySpeed;
+            };
+
+            this.changeDirection = function (direction) {
+                switch (direction) {
+                    case "Up":
+                        if (this.ySpeed === 0) {
+                            this.xSpeed = 0;
+                            this.ySpeed = -scale * 1;
+                        }
+                        break;
+                    case "Down":
+                        if (this.ySpeed === 0) {
+                            this.xSpeed = 0;
+                            this.ySpeed = scale * 1;
+                        }
+                        break;
+                    case "Left":
+                        if (this.xSpeed === 0) {
+                            this.xSpeed = -scale * 1;
+                            this.ySpeed = 0;
+                        }
+                        break;
+                    case "Right":
+                        if (this.xSpeed === 0) {
+                            this.xSpeed = scale * 1;
+                            this.ySpeed = 0;
+                        }
+                        break;
+                }
+            };
+
+            this.eat = function (fruit) {
+                if (this.x === fruit.x && this.y === fruit.y) {
+                    this.total++;
+                    return true;
+                }
+                return false;
+            };
+
+            this.checkCollision = function () {
+                if (this.x >= canvas.width || this.x < 0 || this.y >= canvas.height || this.y < 0) {
+                    return true;
+                }
+                return false;
+            };
+        }
+
+        function Fruit() {
+            this.x;
+            this.y;
+
+            this.pickLocation = function () {
+                this.x = (Math.floor(Math.random() * rows - 1) + 1) * scale;
+                this.y = (Math.floor(Math.random() * columns - 1) + 1) * scale;
+            };
+
+            this.draw = function () {
+                ctx.fillStyle = "#f00";
+                ctx.fillRect(this.x, this.y, scale, scale);
+            };
+        }
+
+        function gameOver() {
+            alert("Game Over! Your snake collided with the border.");
+            location.reload(); // Reload the page to restart the game
+        }
+    </script>
+</body>
+</html>
